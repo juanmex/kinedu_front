@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Swal from "sweetalert2";
 import { Link } from "react-router-dom";
 
 import ActivityLogApi from "./../api/ActivityLogApi";
@@ -28,7 +29,7 @@ const ActivityAditionalInfo = ({ activity_log }) => {
     )
 }
 
-const StopActivityForm = ({ activity_log }) => {
+const StopActivityForm = ({ activity_log, onStop }) => {
     const [formData, setFormData] = useState({
         stop_time: "",
         comments: ""
@@ -37,8 +38,22 @@ const StopActivityForm = ({ activity_log }) => {
 
     const stopActivity = () => {
 
+        if (formData.stop_time == "") {
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: "Por favor ingrese la fecha final"
+            });
+            return;
+        }
+
+        ActivityLogApi.update(activity_log.id, { activity_log: {...formData, stop_time: new Date(formData.stop_time)} })
+            .then(response => {
+                onStop();
+            });
+
     }
-    
+
     return (
         <div>
             <div>
@@ -50,7 +65,7 @@ const StopActivityForm = ({ activity_log }) => {
                 <textarea className="form-control" type="text" value={formData.comments} onChange={e => setFormData({ ...formData, comments: e.target.value })} />
             </div>
             <div className="form_actions">
-                <Link className="btn btn-primary" to="/activity_logs/">Finalizar</Link>
+                <button type="button" onClick={stopActivity} className="btn btn-primary">Finalizar</button>
             </div>
         </div>
     )
@@ -64,14 +79,18 @@ const ActivityLogsShow = ({ match }) => {
         activity: { name: "" },
     });
 
-    const [start_date, setStartDate] = useState("");
-    useEffect(() => {
+    const loadActivityLog = () => {
         ActivityLogApi.show(id)
             .then(response => (response.data))
             .then(data => {
                 setActivityLog(data);
                 setStartDate(formatDate(data.start_time));
             });
+    }
+
+    const [start_date, setStartDate] = useState("");
+    useEffect(() => {
+        loadActivityLog();
     }, []);
     return (
         <div>
@@ -100,7 +119,7 @@ const ActivityLogsShow = ({ match }) => {
                     </div>
                 </div>
                 <div className="col">
-                    {activity_log.stop_time ? <ActivityAditionalInfo activity_log={activity_log} /> : <StopActivityForm activity_log={activity_log} />}
+                    {activity_log.stop_time ? <ActivityAditionalInfo activity_log={activity_log} /> : <StopActivityForm onStop={loadActivityLog} activity_log={activity_log} />}
                 </div>
             </div>
         </div>
