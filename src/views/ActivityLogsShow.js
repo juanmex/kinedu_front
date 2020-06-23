@@ -35,6 +35,10 @@ const StopActivityForm = ({ activity_log, onStop }) => {
         comments: ""
     });
 
+    if(!activity_log.start_time){
+        return null;
+    }
+
 
     const stopActivity = () => {
 
